@@ -2,7 +2,6 @@ import imutils
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-import os
 
 
 
@@ -115,11 +114,11 @@ def find_square(img):
 def roller_calc(img):
 
     # limits for the mask
-    #lower = np.array([163, 120, 130])
-    #upper = np.array([173, 226, 255])
+    lower = np.array([163, 120, 130])
+    upper = np.array([173, 226, 255])
 
-    lower = np.array([160, 80, 130])
-    upper = np.array([164, 210, 255])
+    #lower = np.array([160, 80, 130])
+    #upper = np.array([164, 210, 255])
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -147,7 +146,6 @@ def roller_calc(img):
         if len(approx) == 4:
             screenCnt = approx
             cv2.drawContours(gray, [screenCnt], -1, (0, 255, 0), 2)
-            #print(screenCnt)
             warped = four_point_transform(img, screenCnt.reshape(4, 2))
 
             break
@@ -155,14 +153,14 @@ def roller_calc(img):
             #print(len(approx))
             warped = np.zeros(np.shape(img))
 
-    plt.figure()
+    """plt.figure()
     plt.subplot(131)
     plt.imshow(hsv)
     plt.subplot(132)
     plt.imshow(warped)
     plt.subplot(133)
     plt.imshow(gray)
-    plt.show()
+    plt.show()"""
 
     return warped
 
@@ -185,9 +183,18 @@ def look_for_red_points(ima):
     ypoints_std = np.std(non_zero_points[1])
 
     frecuencies_y = (np.histogram(non_zero_points[0])[0])
-    lines_y = (np.where(frecuencies_y > 10))
-    line_y1 = np.histogram(non_zero_points[0])[1][lines_y[0][0]]
-    line_y2 = np.histogram(non_zero_points[0])[1][lines_y[0][1]]
+    lines_y = (np.where(frecuencies_y > 0))
+
+    if lines_y[0] != []:
+        line_y1 = np.histogram(non_zero_points[0])[1][lines_y[0][0]]
+    else:
+        line_y1 = 0
+
+    if lines_y[0] != []:
+        line_y2 = np.histogram(non_zero_points[0])[1][lines_y[0][1]]
+    else:
+        line_y2 = 0
+
     #print(line_y1)
     #print(line_y2)
     #plt.hist(non_zero_points[0])
@@ -196,22 +203,28 @@ def look_for_red_points(ima):
     #print(np.histogram(non_zero_points[1]))
     #plt.hist(non_zero_points[1])
 
-
     return line_y1, line_y2, 0, 0
 
 
 def calculate_distances(points_1, points_2, rate, curvature=False):
-    if curvature is True:
-        parameter = 2/1.5
-    else:
-        parameter = 1
 
-    return abs(points_1 - points_2)*rate*parameter
+    if points_1 == points_2:
+        result = 'Error, not possible to calculate'
+    else:
+
+        if curvature is True:
+            parameter = 2/1.5
+        else:
+            parameter = 1
+
+        result = abs(points_1 - points_2)*rate*parameter
+
+    return result
 
 
 def magic(img, curvature_calc):
 
-    plots = True
+    plots = False
 
     reference = np.zeros(np.array([2, 4]))
     new_perspective = roller_calc(img)
@@ -239,6 +252,7 @@ def magic(img, curvature_calc):
 
     if plots is True:
 
+        pass
         plt.figure()
         plt.subplot(121)
         plt.imshow(new_perspective)
@@ -248,21 +262,4 @@ def magic(img, curvature_calc):
 
     return magic_number
 
-
-def main():
-    # load the image
-    cur_direct = os.getcwd()
-    directory_path = '/images/test_app/'
-    #directory_path = '/images/test_images/'
-    files1 = [f for f in os.listdir(os.getcwd() + directory_path)]
-
-    for file in files1[:]:
-        print(file)
-        img = cv2.imread(''.join([cur_direct, directory_path, file]))
-        result = magic(img, False)
-        print('the value is: ', result)
-
-
-if __name__ == '__main__':
-    main()
 
